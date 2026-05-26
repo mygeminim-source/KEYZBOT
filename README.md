@@ -16,6 +16,7 @@
 
 ## Features
 
+- **Auto-update** — checks GitHub on every startup, pulls and restarts if new version exists
 - **34 built-in tools** — bash, file ops, git, web search, image reading, scheduling, and more
 - **Multimodal chat** — upload images with text, AI can see and analyze them
 - **Image compression** — auto-resize to 1024px JPEG 70% before sending to API

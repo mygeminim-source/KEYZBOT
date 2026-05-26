@@ -1,8 +1,38 @@
 """KEYZBOT Web Server — Flask + SocketIO, all features."""
 
-import sys, os, json, time, threading, uuid, signal
+import sys, os, json, time, threading, uuid, signal, subprocess
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+def _auto_update():
+    """Check GitHub for updates, pull and restart if newer version exists."""
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    git_dir = os.path.join(repo_dir, ".git")
+    if not os.path.isdir(git_dir):
+        return
+    try:
+        subprocess.run(["git", "fetch", "--quiet"], cwd=repo_dir,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo_dir,
+                               capture_output=True, text=True, timeout=10).stdout.strip()
+        remote = subprocess.run(["git", "rev-parse", "@{u}"], cwd=repo_dir,
+                                capture_output=True, text=True, timeout=10).stdout.strip()
+        if not remote or local == remote:
+            return
+        result = subprocess.run(["git", "pull", "--ff-only", "--quiet"], cwd=repo_dir,
+                                capture_output=True, text=True, timeout=60)
+        if result.returncode == 0:
+            req_result = subprocess.run(["git", "diff", "--name-only", local, remote],
+                                        cwd=repo_dir, capture_output=True, text=True, timeout=10)
+            if "requirements.txt" in req_result.stdout:
+                subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
+                               cwd=repo_dir, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
+            print(f"\033[93m[KEYZBOT] Updated! Restarting server...\033[0m")
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+    except Exception:
+        pass
+
+_auto_update()
 
 # Set recursion limit higher for complex tool chains
 sys.setrecursionlimit(2000)
