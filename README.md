@@ -6,7 +6,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-9.2-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-9.3-blue?style=for-the-badge)
 ![Python](https://img.shields.io/badge/python-3.8+-green?style=for-the-badge)
 ![Tools](https://img.shields.io/badge/tools-265-orange?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen?style=for-the-badge)
@@ -288,6 +288,21 @@ KEYZBOT/
         ├── style.css       # Theme styles (dark/light)
         └── keyzbot.svg     # Logo
 ```
+
+---
+
+## Update (Existing Users)
+
+If you cloned KEYZBOT before and auto-update isn't working:
+
+```bash
+cd ~/KEYZBOT
+git fetch origin
+git reset --hard origin/master
+pip install -r requirements.txt
+```
+
+After this, all future updates are fully automatic.
 
 ---
 

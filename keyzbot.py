@@ -63,7 +63,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core import config, ui, agent, memory, plan, tasks, hooks, skills, scheduler, subagents, permissions
 from core.config import save_history, load_history, list_history
 
-VERSION = "9.1"
+VERSION = "9.3"
 
 # ─── Commands ─────────────────────────────────────────────────────────────────
 def cmd_help():
