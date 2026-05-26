@@ -52,12 +52,12 @@ socket.on("update_status", (data) => {
 socket.on("status", (s) => {
     updateTopbarTags(s);
     const sessionTag = document.getElementById("topbar-session");
-    if (s.messages) { sessionTag.textContent = s.messages + " msgs"; sessionTag.style.display = ""; }
+    if (s.messages) { countUp(sessionTag, s.messages, 600, " msgs"); sessionTag.style.display = ""; }
     else { sessionTag.style.display = "none"; }
     const tokenStr = s.tokens ? `${s.tokens} tokens` : "0 tokens";
     const costStr = s.cost ? ` · $${s.cost}` : "";
     document.getElementById("sidebar-tokens").textContent = tokenStr + costStr;
-    if (s.tool_count) document.getElementById("tools-count").textContent = s.tool_count + " tools";
+    if (s.tool_count) countUp(document.getElementById("tools-count"), s.tool_count, 800, " tools");
     const wd = s.work_dir || "";
     const shortPath = wd ? wd.split('/').slice(-2).join('/') : "Ready";
     const statusToken = s.tokens ? ` · ${s.tokens}t` : "";

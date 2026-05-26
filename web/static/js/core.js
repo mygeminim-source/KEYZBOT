@@ -128,4 +128,28 @@ function fetchConfig() {
     fetch("/api/config").then(r => r.json()).then(cfg => updateTopbarTags(cfg)).catch(() => {});
 }
 
+// ─── Counting Animation ─────────────────────────────────────────────────────
+function countUp(el, target, duration, suffix) {
+    if (!el || !target || target <= 0) { if (el) el.textContent = "0" + (suffix || ""); return; }
+    suffix = suffix || "";
+    const start = parseInt(el.textContent) || 0;
+    if (start === target) return;
+    const diff = target - start;
+    const steps = Math.min(Math.abs(diff), 20);
+    const stepTime = Math.max(15, duration / steps);
+    let current = start;
+    let step = 0;
+    const timer = setInterval(() => {
+        step++;
+        const progress = step / steps;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        current = Math.round(start + diff * eased);
+        el.textContent = current + suffix;
+        if (step >= steps) {
+            el.textContent = target + suffix;
+            clearInterval(timer);
+        }
+    }, stepTime);
+}
+
 window.addEventListener("load", () => input.focus());
