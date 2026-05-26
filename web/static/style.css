@@ -64,42 +64,36 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .sidebar-logo{
   width:36px;height:36px;border-radius:10px;
-  filter:brightness(1.1) drop-shadow(0 2px 6px rgba(139,92,246,.2));
-  transition:filter .4s ease;
+  transition:transform .6s cubic-bezier(.4,0,.2,1),filter .6s ease;
+  animation:logoFloat 6s ease-in-out infinite;
 }
-[data-theme="light"] .sidebar-logo{
-  filter:brightness(.85) drop-shadow(0 2px 6px rgba(0,0,0,.1));
+.sidebar-logo:hover{
+  transform:scale(1.08);
+  filter:brightness(1.15) drop-shadow(0 4px 12px rgba(139,92,246,.25));
 }
-.sidebar-brand{position:relative;overflow:hidden}
-.sidebar-brand::after{
-  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(167,139,250,.06),transparent);
-  animation:brandShine 4s ease-in-out infinite;
+@keyframes logoFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-2px)}
 }
-@keyframes brandShine{
-  0%,100%{left:-100%}
-  50%{left:150%}
-}
-.sidebar-brand-info{display:flex;flex-direction:column;position:relative;z-index:1}
+.sidebar-brand-info{display:flex;flex-direction:column}
 .sidebar-brand-name{
   font-size:16px;font-weight:800;letter-spacing:-.3px;
-  background:linear-gradient(135deg,#a78bfa,#6366f1,#818cf8,#a78bfa);
-  background-size:300% 100%;
+  background:linear-gradient(90deg,#a78bfa,#6366f1,#818cf8,#a78bfa,#6366f1);
+  background-size:400% 100%;
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;background-clip:text;
-  animation:brandGradient 5s ease infinite;
+  animation:brandFlow 8s linear infinite;
 }
-@keyframes brandGradient{
+@keyframes brandFlow{
   0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
+  100%{background-position:400% 50%}
 }
 [data-theme="light"] .sidebar-brand-name{
-  background:linear-gradient(135deg,#7c3aed,#4f46e5,#6366f1,#7c3aed);
-  background-size:300% 100%;
+  background:linear-gradient(90deg,#7c3aed,#4f46e5,#6366f1,#7c3aed,#4f46e5);
+  background-size:400% 100%;
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;background-clip:text;
-  animation:brandGradient 5s ease infinite;
+  animation:brandFlow 8s linear infinite;
 }
 .sidebar-brand-sub{
   font-size:10px;color:var(--text3);letter-spacing:.8px;
@@ -208,9 +202,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .topbar-title{
   font-weight:800;font-size:15px;letter-spacing:-.3px;
-  background:linear-gradient(135deg,#a78bfa,#60a5fa);
+  background:linear-gradient(90deg,#a78bfa,#6366f1,#818cf8,#a78bfa,#6366f1);
+  background-size:400% 100%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;flex-shrink:0;line-height:1;
+  animation:brandFlow 8s linear infinite;
+}
+[data-theme="light"] .topbar-title{
+  background:linear-gradient(90deg,#7c3aed,#4f46e5,#6366f1,#7c3aed,#4f46e5);
+  background-size:400% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:brandFlow 8s linear infinite;
 }
 .topbar-divider{
   width:1px;height:14px;background:var(--border);flex-shrink:0;
@@ -269,6 +272,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .welcome-icon img{
   filter:brightness(1.3) contrast(1.1);
   transition:filter .4s ease;
+  animation:logoFloat 6s ease-in-out infinite;
 }
 [data-theme="light"] .welcome-icon img{
   filter:brightness(1.8) contrast(1.2);
@@ -276,11 +280,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .welcome-icon::after{
   content:'';position:absolute;inset:-3px;border-radius:22px;
   background:var(--gradient);opacity:.2;filter:blur(8px);z-index:-1;
-  animation:welcomePulse 3s ease-in-out infinite;
+  animation:glowPulse 4s ease-in-out infinite;
 }
-@keyframes welcomePulse{
-  0%,100%{opacity:.15;filter:blur(8px)}
-  50%{opacity:.3;filter:blur(12px)}
+@keyframes glowPulse{
+  0%,100%{opacity:.15;transform:scale(1)}
+  50%{opacity:.3;transform:scale(1.04)}
 }
 .welcome h1{font-size:30px;font-weight:800;color:var(--text);line-height:1.2;letter-spacing:-.8px}
 .welcome p{color:var(--text2);font-size:15px;max-width:460px;line-height:1.7}
@@ -972,6 +976,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .setup-logo img{
   filter:brightness(1.3) contrast(1.1);
+  animation:logoFloat 6s ease-in-out infinite;
 }
 [data-theme="light"] .setup-logo img{
   filter:brightness(1.8) contrast(1.2);

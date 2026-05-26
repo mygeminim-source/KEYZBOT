@@ -1197,8 +1197,8 @@ function _createHamburgerMenu() {
     menu.innerHTML = `
         <div class="hamburger-header">
             <div style="display:flex;align-items:center;gap:10px">
-                <img src="/keyzbot.svg" width="24" height="24" style="border-radius:6px">
-                <span class="hamburger-title">KEYZBOT</span>
+                <img src="/keyzbot.svg" width="24" height="24" style="border-radius:6px;animation:logoFloat 6s ease-in-out infinite">
+                <span style="font-weight:800;font-size:15px;letter-spacing:-.3px;background:linear-gradient(90deg,#a78bfa,#6366f1,#818cf8,#a78bfa,#6366f1);background-size:400% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:brandFlow 8s linear infinite">KEYZBOT</span>
             </div>
             <button class="hamburger-close" onclick="closeHamburger()">&times;</button>
         </div>
