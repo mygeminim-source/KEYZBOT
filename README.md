@@ -24,7 +24,7 @@ An autonomous AI coding agent with **34 built-in tools**, **multimodal vision**,
 
 | | Feature | Description |
 |---|---|---|
-| | **Auto-Update** | Checks GitHub on every startup. Pulls and restarts automatically if a new version exists. Zero manual effort. |
+| | **Auto-Update** | Checks GitHub on every startup + every 5 minutes. Web UI shows toast notification with "Update Now" button. CLI auto-pulls and restarts. |
 | | **Multimodal Chat** | Upload images alongside text. AI sees and analyzes them in real-time. Auto-compressed to 1024px JPEG 70%. |
 | | **34 Tools** | Bash, file ops, git, web search, image analysis, scheduling, GitHub integration, and more. |
 | | **Web UI** | Dark-themed responsive interface with streaming, chat history, tool panels, drag-and-drop. |
