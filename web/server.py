@@ -512,6 +512,11 @@ def on_user_message(data):
 
 @socketio.on("file_upload")
 def on_file_upload(data):
+    sid = request.sid
+    if not rate_limit.check_upload_limit(sid):
+        remaining = rate_limit.get_remaining(sid)
+        emit("upload_result", {"error": f"Rate limit exceeded. {remaining} remaining."})
+        return
     filename = data.get("filename", "")
     b64data = data.get("data", "")
     work_dir = data.get("work_dir", os.getcwd())
