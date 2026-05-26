@@ -49,6 +49,48 @@ socket.on("connected", (data) => {
     if (data.streaming) {
         showThinking();
     }
+    // Show update toast if update available
+    if (data.update_available) {
+        showUpdateToast();
+    }
+});
+
+// ── Update Toast ─────────────────────────────────────────────────────────────
+function showUpdateToast() {
+    document.getElementById("update-toast").style.display = "block";
+}
+
+function dismissUpdate() {
+    document.getElementById("update-toast").style.display = "none";
+}
+
+function doUpdate() {
+    const btn = document.getElementById("update-btn");
+    const status = document.getElementById("update-status");
+    btn.disabled = true;
+    btn.textContent = "Updating...";
+    status.style.display = "block";
+    status.textContent = "Checking for updates...";
+    socket.emit("update_now");
+}
+
+socket.on("update_available", (data) => {
+    showUpdateToast();
+});
+
+socket.on("update_status", (data) => {
+    const status = document.getElementById("update-status");
+    const btn = document.getElementById("update-btn");
+    status.style.display = "block";
+    status.textContent = data.message || "";
+    if (data.status === "restarting") {
+        btn.textContent = "Restarting...";
+        status.textContent = "Server sedang restart...";
+    } else if (data.status === "error") {
+        btn.disabled = false;
+        btn.textContent = "Update Now";
+        status.style.color = "#ef4444";
+    }
 });
 
 socket.on("status", (s) => {

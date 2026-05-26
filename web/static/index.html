@@ -382,7 +382,21 @@
         </div>
     </div>
 
+    <!-- Update Toast Notification -->
+    <div id="update-toast">
+        <div class="toast-header">
+            <div class="toast-dot"></div>
+            <span class="toast-title">Update Tersedia!</span>
+        </div>
+        <div class="toast-body">Versi baru KEYZBOT sudah tersedia di GitHub.</div>
+        <div class="toast-actions">
+            <button class="toast-btn toast-btn-primary" id="update-btn" onclick="doUpdate()">Update Now</button>
+            <button class="toast-btn toast-btn-ghost" onclick="dismissUpdate()">Nanti</button>
+        </div>
+        <div class="toast-status" id="update-status"></div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="/app.js?v=25"></script>
+    <script src="/app.js?v=26"></script>
 </body>
 </html>

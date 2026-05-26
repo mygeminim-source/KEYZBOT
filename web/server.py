@@ -4,35 +4,46 @@ import sys, os, json, time, threading, uuid, signal, subprocess
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def _auto_update():
-    """Check GitHub for updates, pull and restart if newer version exists."""
-    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    git_dir = os.path.join(repo_dir, ".git")
-    if not os.path.isdir(git_dir):
-        return
+_REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_update_available = False
+_latest_commit = ""
+
+def _git_check():
+    """Check if remote has newer commits. Returns (behind: bool, short_hash: str)."""
+    if not os.path.isdir(os.path.join(_REPO_DIR, ".git")):
+        return False, ""
     try:
-        subprocess.run(["git", "fetch", "--quiet"], cwd=repo_dir,
+        subprocess.run(["git", "fetch", "--quiet"], cwd=_REPO_DIR,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
-        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo_dir,
+        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=_REPO_DIR,
                                capture_output=True, text=True, timeout=10).stdout.strip()
-        remote = subprocess.run(["git", "rev-parse", "@{u}"], cwd=repo_dir,
+        remote = subprocess.run(["git", "rev-parse", "@{u}"], cwd=_REPO_DIR,
                                 capture_output=True, text=True, timeout=10).stdout.strip()
         if not remote or local == remote:
-            return
-        result = subprocess.run(["git", "pull", "--ff-only", "--quiet"], cwd=repo_dir,
+            return False, ""
+        short = subprocess.run(["git", "rev-parse", "--short", remote], cwd=_REPO_DIR,
+                               capture_output=True, text=True, timeout=10).stdout.strip()
+        return True, short
+    except Exception:
+        return False, ""
+
+def _git_pull_restart():
+    """Pull latest changes and restart the server process."""
+    try:
+        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=_REPO_DIR,
+                               capture_output=True, text=True, timeout=10).stdout.strip()
+        result = subprocess.run(["git", "pull", "--ff-only", "--quiet"], cwd=_REPO_DIR,
                                 capture_output=True, text=True, timeout=60)
         if result.returncode == 0:
-            req_result = subprocess.run(["git", "diff", "--name-only", local, remote],
-                                        cwd=repo_dir, capture_output=True, text=True, timeout=10)
+            req_result = subprocess.run(["git", "diff", "--name-only", local, "HEAD"],
+                                        cwd=_REPO_DIR, capture_output=True, text=True, timeout=10)
             if "requirements.txt" in req_result.stdout:
                 subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
-                               cwd=repo_dir, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
+                               cwd=_REPO_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
             print(f"\033[93m[KEYZBOT] Updated! Restarting server...\033[0m")
             os.execv(sys.executable, [sys.executable] + sys.argv)
     except Exception:
         pass
-
-_auto_update()
 
 # Set recursion limit higher for complex tool chains
 sys.setrecursionlimit(2000)
@@ -387,12 +398,14 @@ def on_connect():
     # Check if active chat is currently streaming — restore thinking animation
     is_streaming = (bid, user["active_chat"]) in _streaming_chats
     emit("connected", {
-        "version": "9.0",
+        "version": "9.1",
         "chats": _make_chat_summary(user),
         "active_chat": user["active_chat"],
         "messages": messages,
         "streaming": is_streaming,
         "profile": _load_profile(),
+        "update_available": _update_available,
+        "latest_commit": _latest_commit,
     })
 
 @socketio.on("disconnect")
@@ -654,6 +667,47 @@ def on_test_provider(data):
             emit("provider_test_result", {"success": False, "error": f"HTTP {resp.status_code}: {resp.text[:200]}"})
     except Exception as e:
         emit("provider_test_result", {"success": False, "error": str(e)})
+
+@socketio.on("update_now")
+def on_update_now():
+    """Pull latest from GitHub and restart server."""
+    global _update_available, _latest_commit
+    emit("update_status", {"status": "pulling", "message": "Pulling updates..."})
+    try:
+        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=_REPO_DIR,
+                               capture_output=True, text=True, timeout=10).stdout.strip()
+        result = subprocess.run(["git", "pull", "--ff-only", "--quiet"], cwd=_REPO_DIR,
+                                capture_output=True, text=True, timeout=60)
+        if result.returncode == 0:
+            req_result = subprocess.run(["git", "diff", "--name-only", local, "HEAD"],
+                                        cwd=_REPO_DIR, capture_output=True, text=True, timeout=10)
+            if "requirements.txt" in req_result.stdout:
+                emit("update_status", {"status": "installing", "message": "Installing dependencies..."})
+                subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
+                               cwd=_REPO_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
+            emit("update_status", {"status": "restarting", "message": "Restarting server..."})
+            _update_available = False
+            _latest_commit = ""
+            # Give the client time to receive the event
+            import time; time.sleep(1)
+            print(f"\033[93m[KEYZBOT] Updated by user! Restarting server...\033[0m")
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
+            emit("update_status", {"status": "error", "message": "Update failed. Try manually."})
+    except Exception as e:
+        emit("update_status", {"status": "error", "message": str(e)})
+
+def _update_checker_loop():
+    """Background thread: check for updates every 5 minutes."""
+    global _update_available, _latest_commit
+    while True:
+        time.sleep(300)
+        behind, commit = _git_check()
+        if behind:
+            _update_available = True
+            _latest_commit = commit
+            socketio.emit("update_available", {"commit": commit})
+            print(f"\033[93m[KEYZBOT] Update available: {commit}\033[0m")
 
 def _make_status(bot):
     from core import tools as tool_router
@@ -1140,6 +1194,18 @@ def start_web(host="0.0.0.0", port=8080, open_browser=True):
     print(f"  \033[90m{'━' * 40}\033[0m")
     print(f"  \033[92m●\033[0m Server running at \033[97m\033[1mhttp://localhost:{port}\033[0m")
     print(f"  \033[90mPress Ctrl+C to stop\033[0m\n")
+    # Start background update checker
+    threading.Thread(target=_update_checker_loop, daemon=True).start()
+    # Check once at startup
+    def _startup_check():
+        global _update_available, _latest_commit
+        behind, commit = _git_check()
+        if behind:
+            _update_available = True
+            _latest_commit = commit
+            print(f"\033[93m[KEYZBOT] Update available: {commit} — will notify clients\033[0m")
+    threading.Thread(target=_startup_check, daemon=True).start()
+
     if open_browser:
         threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
     socketio.run(app, host=host, port=port, debug=False, allow_unsafe_werkzeug=True)
