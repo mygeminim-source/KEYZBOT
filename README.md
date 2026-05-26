@@ -8,6 +8,8 @@
 
 ![Version](https://img.shields.io/badge/version-9.2-blue?style=for-the-badge)
 ![Python](https://img.shields.io/badge/python-3.8+-green?style=for-the-badge)
+![Tools](https://img.shields.io/badge/tools-36-orange?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/platform-Termux%20%7C%20Linux-lightgrey?style=for-the-badge)
 
@@ -22,7 +24,7 @@
 
 Full-stack autonomous coding agent that runs natively on Android via Termux.
 
-**34 built-in tools. Web UI. Multi-provider. No API key needed to start.**
+**36 built-in tools. Web UI. Multi-provider. No API key needed to start.**
 
 <br>
 
@@ -41,7 +43,7 @@ Full-stack autonomous coding agent that runs natively on Android via Termux.
 | Feature | Description |
 |---------|-------------|
 | **Zero Config** | OpenGateway pre-configured. Clone, install, run. No API key needed to start. |
-| **34 Built-in Tools** | Bash, file ops, git, web search, image analysis, scheduling, GitHub API, and more. |
+| **36 Built-in Tools** | Bash, file ops, git, web search, image analysis, scheduling, GitHub API, and more. |
 | **Multi-Provider** | Switch between OpenGateway, Groq, SambaNova, Cerebras, OpenRouter, or any OpenAI-compatible API. |
 | **Web UI** | Dark/light theme, streaming responses, chat history, tool panels, drag-and-drop file upload. |
 | **Multi-Chat** | Create, switch, rename, delete conversations. Full session persistence across refreshes. |
@@ -180,15 +182,23 @@ keyzbot /fork "refactor src"  # spawn sub-agent
 
 ## Tools
 
+36 built-in tools across 16 modules.
+
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **System** | `bash` `file_ops` `monitor` | Shell execution, file read/write/edit, process monitoring |
-| **Code** | `git_ops` `github` `lint_test` `notebook` | Git commands, GitHub API, linting, Jupyter notebooks |
-| **Web** | `web` `doc_reader` | Web search & page extraction, document reading |
-| **Media** | `image` | Image reading and visual analysis |
-| **Project** | `project_detect` `tokenizer` | Auto-detect project type, token counting |
-| **Productivity** | `task_tools` `cron_tools` `ask_user` | Task management, scheduled jobs, interactive prompts |
-| **Extensions** | `mcp` `plugins` | Model Context Protocol, custom plugin system |
+| **Shell** | `bash` | Execute shell commands with timeout and working directory control |
+| **Files** | `read_file` `write_file` `edit_file` `glob_files` `grep_files` `list_dir` `tree` | Full filesystem operations — read, write, edit, search, list, tree view |
+| **Git** | `git` | Full git CLI — commit, push, pull, diff, log, branch, etc. |
+| **GitHub** | `github` | GitHub API — PRs, issues, releases, checks, comments |
+| **Web** | `web_search` `web_fetch` `read_document` | Web search via SearXNG, page extraction via Jina, document parsing |
+| **Media** | `read_image` | Image reading and visual analysis with multimodal AI |
+| **Code** | `lint` `test_runner` `notebook_read` `notebook_edit` `notebook_run` | Linting, test execution, Jupyter notebook support |
+| **Monitoring** | `monitor_start` `monitor_status` `monitor_output` `monitor_stop` | Background process monitoring with stream output |
+| **Project** | `detect_project` | Auto-detect project type, framework, and structure |
+| **Tasks** | `task_create` `task_list` `task_update` `task_delete` | Structured task tracking with dependencies |
+| **Scheduling** | `cron_create` `cron_list` `cron_delete` | Cron-based job scheduling |
+| **Interaction** | `ask_user` | Interactive prompts for user input during tool execution |
+| **MCP** | `mcp_list` `mcp_call` | Model Context Protocol — connect to external tool servers |
 
 ---
 
@@ -220,9 +230,9 @@ KEYZBOT/
 │   ├── plugins.py          # Plugin loader
 │   └── ui.py               # Terminal UI helpers
 │
-├── tools/                  # 34 built-in tools (16 modules)
+├── tools/                  # 36 built-in tools (16 modules)
 │   ├── bash.py             # Shell execution
-│   ├── file_ops.py         # File operations
+│   ├── file_ops.py         # File operations (read, write, edit, glob, grep, list, tree)
 │   ├── git_ops.py          # Git commands
 │   ├── github.py           # GitHub API
 │   ├── web.py              # Web search & fetch
@@ -235,7 +245,7 @@ KEYZBOT/
 │   ├── ask_user.py         # Interactive prompts
 │   ├── monitor.py          # Process monitoring
 │   ├── project_detect.py   # Project detection
-│   ├── tokenizer.py        # Token counting
+│   ├── tokenizer.py        # Token counting (utility)
 │   └── mcp.py              # MCP protocol
 │
 └── web/                    # Web UI
