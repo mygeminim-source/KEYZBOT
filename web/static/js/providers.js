@@ -153,7 +153,7 @@ function testProvider(id) {
         resultEl.className = 'pcard-test-result show';
         resultEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><circle cx="12" cy="12" r="10"/></svg> Testing connection...';
     }
-    socket.emit("test_provider", {provider_id: id, base_url: url, api_key: key, model: model});
+    socket.emit("test_provider", {base_url: url, api_key: key, model: model});
 }
 
 function removeProvider(id) {
