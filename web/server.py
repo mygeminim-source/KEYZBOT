@@ -48,6 +48,14 @@ def _git_pull_restart():
 # Set recursion limit higher for complex tool chains
 sys.setrecursionlimit(2000)
 
+# Global: disable system proxy for ALL requests sessions (prevents SOCKS crash)
+import requests as _req
+_orig_session_init = _req.Session.__init__
+def _patched_session_init(self, *args, **kwargs):
+    _orig_session_init(self, *args, **kwargs)
+    self.trust_env = False
+_req.Session.__init__ = _patched_session_init
+
 # Force threading mode — eventlet is incompatible with Python 3.14+
 # It causes infinite recursion in importlib._bootstrap due to monkey_patch
 ASYNC_MODE = "threading"
