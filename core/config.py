@@ -68,10 +68,6 @@ DEFAULTS = {
     "max_rounds": 25,
     "max_context_tokens": 50000,
     "username": "",
-    "activity_enabled": True,
-    "activity_endpoint": "https://opengateway.gitlawb.com",
-    "activity_client_token": "",
-    "activity_share_prompts": True,
 }
 
 PRESET_PROVIDERS = [
