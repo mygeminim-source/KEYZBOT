@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="web/static/keyzbot.svg" alt="KEYZBOT" width="96" height="96" style="border-radius:20px">
+
 # KEYZBOT
 
-**Full-Stack AI Coding Agent**
+**Full-Stack Autonomous AI Agent**
 
 <br>
 
-![Version](https://img.shields.io/badge/version-9.1-blue)
+![Version](https://img.shields.io/badge/version-9.2-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![Tools](https://img.shields.io/badge/tools-34-orange)
 ![License](https://img.shields.io/badge/license-MIT-purple)
@@ -14,7 +16,9 @@
 
 <br>
 
-An autonomous AI coding agent with **34 built-in tools**, **multimodal vision**, **web UI**, and **auto-updates** — built to run natively on Android via Termux.
+An autonomous AI coding agent with **34 built-in tools**, **multimodal vision**, **web UI**, **provider management**, and **auto-updates** — built to run natively on Android via Termux.
+
+**Works out of the box** — no API key required to start. OpenGateway is configured by default.
 
 </div>
 
@@ -24,10 +28,12 @@ An autonomous AI coding agent with **34 built-in tools**, **multimodal vision**,
 
 | | Feature | Description |
 |---|---|---|
+| | **Zero Config** | OpenGateway works instantly — no API key needed. Just clone and run. |
+| | **Provider Manager** | Add, edit, delete, and switch between providers from the web UI. Preset templates for Groq, SambaNova, Cerebras, OpenRouter. |
 | | **Auto-Update** | Checks GitHub on every startup + every 5 minutes. Web UI shows toast notification with "Update Now" button. CLI auto-pulls and restarts. |
 | | **Multimodal Chat** | Upload images alongside text. AI sees and analyzes them in real-time. Auto-compressed to 1024px JPEG 70%. |
 | | **34 Tools** | Bash, file ops, git, web search, image analysis, scheduling, GitHub integration, and more. |
-| | **Web UI** | Dark-themed responsive interface with streaming, chat history, tool panels, drag-and-drop. |
+| | **Web UI** | Responsive interface with dark/light theme, streaming, chat history, tool panels, drag-and-drop. |
 | | **Multi-Chat** | Create, switch, rename, and delete conversations. Full session persistence across refreshes. |
 | | **Sub-Agents** | Fork background agents for parallel task execution. |
 | | **Plan & Tasks** | Structured planning mode with task tracking and dependency management. |
@@ -37,9 +43,9 @@ An autonomous AI coding agent with **34 built-in tools**, **multimodal vision**,
 
 ---
 
-## Quick Start — Termux
+## Quick Start
 
-### Step 1 — Install Termux
+### Step 1 — Install Termux (Android)
 
 Download from **F-Droid** (not Play Store):
 
@@ -63,44 +69,7 @@ pip install -r requirements.txt
 bash install.sh
 ```
 
-### Step 4 — Configure API
-
-Edit `config.json` with your provider credentials:
-
-```json
-{
-  "base_url": "https://your-provider.com/v1",
-  "model": "your-model",
-  "api_key": "your-api-key",
-  "max_tokens": 4096,
-  "temperature": 0.7,
-  "system_prompt": "You are KEYZBOT, a helpful AI assistant."
-}
-```
-
-For multiple providers, edit `providers.json`:
-
-```json
-{
-  "providers": [
-    {
-      "id": "groq",
-      "api_key": "gsk_xxx",
-      "base_url": "https://api.groq.com/openai/v1",
-      "model": "llama-3.3-70b-versatile"
-    },
-    {
-      "id": "sambanova",
-      "api_key": "xxx",
-      "base_url": "https://api.sambanova.ai/v1",
-      "model": "DeepSeek-V3.1"
-    }
-  ],
-  "active": "groq"
-}
-```
-
-### Step 5 — Launch
+### Step 4 — Launch
 
 ```bash
 # CLI mode
@@ -109,6 +78,49 @@ keyzbot
 # Web UI mode
 python3 web/server.py
 # Open http://localhost:8080
+```
+
+That's it. OpenGateway is pre-configured — no API key needed to start chatting.
+
+---
+
+## Provider Management
+
+KEYZBOT supports any OpenAI-compatible API. Manage providers from the web UI or config files.
+
+### Preset Providers (ready to use)
+
+| Provider | Model | Free Tier | Status |
+|----------|-------|-----------|--------|
+| **OpenGateway** | mimo-v2.5-pro | Yes | Default |
+| **Groq** | Llama 3.3 70B | Yes | Preset |
+| **SambaNova** | DeepSeek V3.1 | Yes | Preset |
+| **Cerebras** | Llama 3.1 8B | Yes | Preset |
+| **OpenRouter** | 100+ models | Pay-per-use | Preset |
+| **OpenAI** | GPT-4o | Pay-per-use | Custom |
+| **Anthropic** | Claude 3.5 Sonnet | Pay-per-use | Custom |
+
+### Custom Providers
+
+Add custom providers via:
+
+1. **Web UI** — Settings > Providers > Add Custom Provider
+2. **Config file** — Edit `providers.json`:
+
+```json
+{
+  "providers": {
+    "my-provider": {
+      "name": "My Provider",
+      "base_url": "https://api.example.com/v1",
+      "api_key": "sk-xxx",
+      "model": "my-model",
+      "models": ["my-model", "my-other-model"],
+      "color": "#ff6b6b"
+    }
+  },
+  "active": "my-provider"
+}
 ```
 
 ---
@@ -125,7 +137,7 @@ keyzbot /model sambanova      # switch provider
 keyzbot /fork "refactor src"  # spawn sub-agent
 ```
 
-### Web UI
+### Web UI Commands
 
 ```
 /model        switch model or provider
@@ -133,6 +145,7 @@ keyzbot /fork "refactor src"  # spawn sub-agent
 /clear        clear current chat
 /export       export chat (json/text/markdown)
 /fast         toggle fast output mode
+/help         show all commands
 ```
 
 ### Keyboard Shortcuts
@@ -142,7 +155,9 @@ keyzbot /fork "refactor src"  # spawn sub-agent
 | `Enter` | Send message |
 | `Shift+Enter` | New line |
 | `Ctrl+L` | Clear chat |
-| `Ctrl+K` | Focus input |
+| `Ctrl+K` | Toggle sidebar |
+| `Ctrl+M` | Switch model |
+| `/` | Focus input |
 
 ---
 
@@ -165,14 +180,14 @@ keyzbot /fork "refactor src"  # spawn sub-agent
 ```
 KEYZBOT/
 ├── keyzbot.py              # CLI entry point + auto-updater
-├── config.json             # Single provider config
+├── config.json             # Active provider config
 ├── providers.json          # Multi-provider config
 ├── install.sh              # Termux installer
 ├── requirements.txt        # Python dependencies
 │
 ├── core/                   # Engine
 │   ├── agent.py            # AI agent loop (streaming + tool dispatch)
-│   ├── config.py           # Config & history management
+│   ├── config.py           # Config, providers, history management
 │   ├── tools.py            # Tool router
 │   ├── web_sessions.py     # Session persistence
 │   ├── memory.py           # Persistent memory system
@@ -188,7 +203,7 @@ KEYZBOT/
 │   ├── plugins.py          # Plugin loader
 │   └── ui.py               # Terminal UI helpers
 │
-├── tools/                  # 34 built-in tools
+├── tools/                  # 34 built-in tools (16 modules)
 │   ├── bash.py             # Shell execution
 │   ├── file_ops.py         # File operations
 │   ├── git_ops.py          # Git commands
@@ -206,28 +221,17 @@ KEYZBOT/
 │   ├── tokenizer.py        # Token counting
 │   └── mcp.py              # MCP protocol
 │
+├── svg/                    # Brand assets
+│   └── keyzbot.svg         # Logo (1024x1024)
+│
 └── web/                    # Web UI
     ├── server.py           # Flask + SocketIO backend
     └── static/
         ├── index.html      # UI page
         ├── app.js          # Client logic
-        └── style.css       # Dark theme styles
+        ├── style.css       # Theme styles (dark/light)
+        └── keyzbot.svg     # Logo for web UI
 ```
-
----
-
-## Supported Providers
-
-Any OpenAI-compatible API works. Tested with:
-
-| Provider | Models | Free Tier |
-|----------|--------|-----------|
-| **Groq** | Llama 3.3 70B, Mixtral | Yes |
-| **SambaNova** | DeepSeek V3.1, Llama 3.1 | Yes |
-| **Cerebras** | Llama 3.1 8B | Yes |
-| **OpenRouter** | 100+ models | Pay-per-use |
-| **OpenAI** | GPT-4o, GPT-4 | Pay-per-use |
-| **Anthropic** | Claude 3.5 Sonnet | Pay-per-use |
 
 ---
 
@@ -235,13 +239,14 @@ Any OpenAI-compatible API works. Tested with:
 
 - **Python** 3.8+
 - **Termux** (Android) or any Linux/macOS terminal
-- **API key** from any OpenAI-compatible provider
+- **Internet** connection (for AI API calls)
+- **No API key** needed to start (OpenGateway is pre-configured)
 
 ---
 
 ## Auto-Update
 
-KEYZBOT checks for updates on every launch:
+KEYZBOT checks for updates on every launch and periodically:
 
 ```
 [KEYZBOT] Checking for updates...
@@ -252,6 +257,7 @@ KEYZBOT checks for updates on every launch:
 - Pulls only fast-forward changes (never overwrites local modifications)
 - Auto-installs new dependencies if `requirements.txt` changed
 - Silent fallback if offline — never blocks startup
+- Web UI shows toast notification with one-click "Update Now"
 
 ---
 
