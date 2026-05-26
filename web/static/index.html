@@ -321,17 +321,19 @@
                 </div>
             </header>
 
-            <div id="messages-container">
-                <div id="messages">
-                    <div class="welcome" id="welcome">
-                        <div class="welcome-icon"><img src="/keyzbot.svg" alt="KEYZBOT" width="56" height="56"></div>
-                        <h1>How can I help you today?</h1>
-                        <p>I can write code, run commands, manage files, search the web, work with notebooks, and more.</p>
-                        <div class="welcome-chips">
-                            <button onclick="sendSuggestion('Help me write a Python script')">Write a script</button>
-                            <button onclick="sendSuggestion('Explain this codebase')">Explain code</button>
-                            <button onclick="sendSuggestion('Search and refactor')">Refactor code</button>
-                            <button onclick="sendSuggestion('/help')">Show commands</button>
+            <div class="messages-wrapper">
+                <div id="messages-container">
+                    <div id="messages">
+                        <div class="welcome" id="welcome">
+                            <div class="welcome-icon"><img src="/keyzbot.svg" alt="KEYZBOT" width="56" height="56"></div>
+                            <h1>How can I help you today?</h1>
+                            <p>I can write code, run commands, manage files, search the web, work with notebooks, and more.</p>
+                            <div class="welcome-chips">
+                                <button onclick="sendSuggestion('Help me write a Python script')">Write a script</button>
+                                <button onclick="sendSuggestion('Explain this codebase')">Explain code</button>
+                                <button onclick="sendSuggestion('Search and refactor')">Refactor code</button>
+                                <button onclick="sendSuggestion('/help')">Show commands</button>
+                            </div>
                         </div>
                     </div>
                 </div>

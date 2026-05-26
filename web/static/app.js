@@ -958,8 +958,15 @@ function addThinking() {
 function removeThinking() { if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; } }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function scrollBottom() {
+let _userScrolledUp = false;
+
+function scrollBottom(force) {
     requestAnimationFrame(() => {
+        // Don't auto-scroll if user is reading up (unless forced)
+        if (!force && _userScrolledUp) {
+            _updateScrollBtn();
+            return;
+        }
         container.scrollTop = container.scrollHeight;
         _updateScrollBtn();
     });
@@ -970,19 +977,36 @@ function esc(str) { const d = document.createElement("div"); d.textContent = str
 (function initScrollBtn() {
     const btn = document.getElementById('scroll-bottom-btn');
     if (!btn || !container) return;
-    let userScrolled = false;
+    let _prevScrollTop = container.scrollTop;
+
     function _atBottom() {
         return container.scrollHeight - container.scrollTop - container.clientHeight < 80;
     }
+
     window._updateScrollBtn = function() {
         if (_atBottom()) {
             btn.classList.remove('visible');
+            _userScrolledUp = false;
         } else if (container.scrollHeight > container.clientHeight + 100) {
             btn.classList.add('visible');
         }
     };
+
     container.addEventListener('scroll', function() {
-        _updateScrollBtn();
+        const atBottom = _atBottom();
+        if (atBottom) {
+            _userScrolledUp = false;
+            btn.classList.remove('visible');
+        } else {
+            // Only mark as "user scrolled up" if scroll moved upward
+            if (container.scrollTop < _prevScrollTop - 5) {
+                _userScrolledUp = true;
+            }
+            if (container.scrollHeight > container.clientHeight + 100) {
+                btn.classList.add('visible');
+            }
+        }
+        _prevScrollTop = container.scrollTop;
     }, {passive: true});
 })();
 
@@ -995,7 +1019,7 @@ function esc(str) { const d = document.createElement("div"); d.textContent = str
     function fixLayout() {
         const h = vv.height;
         document.getElementById('app').style.height = h + 'px';
-        scrollBottom();
+        if (!_userScrolledUp) scrollBottom(true);
     }
     vv.addEventListener('resize', fixLayout);
     vv.addEventListener('scroll', fixLayout);

@@ -265,31 +265,30 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #hamburger-btn:hover{background:var(--bg3);color:var(--text)}
 
 /* ─── Messages ─── */
-#messages-container{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;position:relative}
+.messages-wrapper{flex:1;overflow:hidden;position:relative}
+#messages-container{height:100%;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
 #messages{max-width:820px;margin:0 auto;padding:28px 24px;display:flex;flex-direction:column;gap:0;min-height:100%}
 
 /* Scroll to bottom button */
 .scroll-bottom-btn{
-  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:16px;right:16px;
   z-index:50;
   width:40px;height:40px;border-radius:50%;
   border:1px solid var(--border2);
   background:var(--surface);color:var(--text2);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 16px rgba(0,0,0,.2);
-  transition:all .25s cubic-bezier(.4,0,.2,1);
-  opacity:0;pointer-events:none;
-  transform:translateX(-50%) translateY(8px);
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  transition:opacity .25s ease,transform .25s ease;
+  opacity:0;pointer-events:none;transform:translateY(8px);
 }
 .scroll-bottom-btn.visible{
-  opacity:1;pointer-events:auto;
-  transform:translateX(-50%) translateY(0);
+  opacity:1;pointer-events:auto;transform:translateY(0);
 }
 .scroll-bottom-btn:hover{
   background:var(--accent);color:#fff;border-color:var(--accent);
-  box-shadow:0 4px 20px rgba(139,92,246,.3);
+  box-shadow:0 4px 20px rgba(139,92,246,.35);
 }
-.scroll-bottom-btn:active{transform:translateX(-50%) scale(.92)}
+.scroll-bottom-btn:active{transform:scale(.92)}
 
 /* Welcome */
 .welcome{
