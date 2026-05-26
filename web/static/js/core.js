@@ -130,21 +130,23 @@ function fetchConfig() {
 
 // ─── Counting Animation ─────────────────────────────────────────────────────
 function countUp(el, target, duration, suffix) {
-    if (!el || !target || target <= 0) { if (el) el.textContent = "0" + (suffix || ""); return; }
+    if (!el) return;
     suffix = suffix || "";
-    const start = parseInt(el.textContent) || 0;
-    if (start === target) return;
+    target = parseInt(target) || 0;
+    if (target <= 0) { el.textContent = "0" + suffix; return; }
+    const raw = parseInt(el.textContent);
+    const start = isNaN(raw) ? 0 : raw;
+    if (start === target) { el.textContent = target + suffix; return; }
     const diff = target - start;
     const steps = Math.min(Math.abs(diff), 20);
-    const stepTime = Math.max(15, duration / steps);
-    let current = start;
+    const stepTime = Math.max(15, (duration || 600) / steps);
     let step = 0;
     const timer = setInterval(() => {
         step++;
         const progress = step / steps;
         const eased = 1 - Math.pow(1 - progress, 3);
-        current = Math.round(start + diff * eased);
-        el.textContent = current + suffix;
+        const val = Math.round(start + diff * eased);
+        el.textContent = val + suffix;
         if (step >= steps) {
             el.textContent = target + suffix;
             clearInterval(timer);
