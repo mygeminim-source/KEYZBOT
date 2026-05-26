@@ -641,6 +641,8 @@ def on_remove_provider(data):
 def on_test_provider(data):
     """Test a provider connection."""
     import requests as req
+    s = req.Session()
+    s.trust_env = False
     base_url = data.get("base_url", "")
     api_key = data.get("api_key", "")
     model = data.get("model", "")
@@ -653,7 +655,7 @@ def on_test_provider(data):
     if not model:
         model = "mimo-v2.5-pro"
     try:
-        resp = req.post(
+        resp = s.post(
             f"{base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={"model": model, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5},

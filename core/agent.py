@@ -261,7 +261,9 @@ class Agent:
         }
         if self.tools:
             body["tools"] = self.tools
-        return requests.post(url, headers=headers, json=body, stream=stream, timeout=180)
+        s = requests.Session()
+        s.trust_env = False
+        return s.post(url, headers=headers, json=body, stream=stream, timeout=180)
 
     def _call_api_with_retry(self, stream=True, max_retries=3):
         """Call API with exponential backoff retry for transient errors."""

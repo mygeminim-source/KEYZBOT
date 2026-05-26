@@ -1,4 +1,5 @@
 requests
+PySocks
 flask
 flask-socketio
 pytest

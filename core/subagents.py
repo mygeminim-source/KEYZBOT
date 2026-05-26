@@ -166,7 +166,9 @@ def _execute_subagent(name, task, system_suffix, agent_engine, work_dir):
             body["tools"] = tools
 
         try:
-            resp = requests.post(url, headers=headers, json=body, timeout=180)
+            s = requests.Session()
+            s.trust_env = False
+            resp = s.post(url, headers=headers, json=body, timeout=180)
             resp.raise_for_status()
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response else "?"

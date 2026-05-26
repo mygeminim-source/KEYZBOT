@@ -3,6 +3,9 @@
 import re, json, html
 import requests as req
 
+_session = req.Session()
+_session.trust_env = False
+
 TOOL_DEFS = [
     {
         "type": "function",
@@ -63,9 +66,11 @@ def _search(args):
         return "Error: No query provided"
 
     # Try SearXNG first (faster, more reliable)
+    _s = req.Session()
+    _s.trust_env = False
     try:
         searxng_url = "http://localhost:8888/search"
-        resp = req.get(searxng_url, params={"q": query, "format": "json"}, timeout=10)
+        resp = _s.get(searxng_url, params={"q": query, "format": "json"}, timeout=10)
         if resp.status_code == 200:
             data = resp.json()
             results = []
@@ -89,7 +94,7 @@ def _search(args):
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
         }
-        resp = req.post(url, data={"q": query}, headers=headers, timeout=15)
+        resp = _s.post(url, data={"q": query}, headers=headers, timeout=15)
         resp.raise_for_status()
 
         results = []
@@ -138,10 +143,12 @@ def _fetch(args):
         url = url.replace("http://", "https://", 1)
 
     try:
+        _s = req.Session()
+        _s.trust_env = False
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        resp = req.get(url, headers=headers, timeout=15, allow_redirects=True)
+        resp = _s.get(url, headers=headers, timeout=15, allow_redirects=True)
         resp.raise_for_status()
 
         content_type = resp.headers.get("content-type", "")

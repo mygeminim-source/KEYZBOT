@@ -84,6 +84,9 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                        get_browser_id=None, user_sessions=None,
                        stream_buffers=None, key=None):
     import requests as req
+    # Direct connection — bypass system SOCKS5/HTTP proxy
+    session = req.Session()
+    session.trust_env = False
 
     # Build user message — multimodal if images present
     if images and len(images) > 0:
@@ -125,11 +128,11 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
             body["messages"] = bot.messages
         safe_emit("thinking", {"active": True, "chat_id": chat_id})
         try:
-            resp = req.post(url, headers=headers, json=body, stream=True, timeout=180)
+            resp = session.post(url, headers=headers, json=body, stream=True, timeout=180)
             if resp.status_code == 413:
                 bot._auto_compress()
                 body["messages"] = bot.messages
-                resp = req.post(url, headers=headers, json=body, stream=True, timeout=180)
+                resp = session.post(url, headers=headers, json=body, stream=True, timeout=180)
                 if resp.status_code == 413:
                     body["max_tokens"] = max(512, body["max_tokens"] // 2)
                     msgs = bot.messages
@@ -137,7 +140,7 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                     other_msgs = [m for m in msgs if m["role"] != "system"]
                     bot.messages = sys_msgs + other_msgs[-10:]
                     body["messages"] = bot.messages
-                    resp = req.post(url, headers=headers, json=body, stream=True, timeout=180)
+                    resp = session.post(url, headers=headers, json=body, stream=True, timeout=180)
             resp.raise_for_status()
         except Exception as e:
             safe_emit("chat_error", {"error": str(e), "chat_id": chat_id})
