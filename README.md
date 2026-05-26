@@ -306,7 +306,7 @@ MIT License
 
 <div align="center">
 
-**Built by WAHYU FAOSZAN MUZAQI**
+**Built by muzaqi dev**
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/muzaqidev)
 
