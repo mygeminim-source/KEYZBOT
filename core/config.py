@@ -58,12 +58,12 @@ Always use absolute paths for reliability. Never assume you're restricted to any
 DEFAULTS = {
     "base_url": "https://opengateway.gitlawb.com/v1",
     "model": "mimo-v2.5-pro",
-    "api_key": "",
+    "api_key": "ogw_live_e00b07a96253577cd3933a5bb9bee292",
     "max_tokens": 16384,
     "temperature": 0.7,
     "multimodal_enabled": True,
     "system_prompt": DEFAULT_SYSTEM_PROMPT,
-    "active_provider": "default",
+    "active_provider": "opengateway",
     "default_work_dir": "/sdcard/Documents",
     "max_rounds": 25,
     "max_context_tokens": 50000,
@@ -76,9 +76,10 @@ PRESET_PROVIDERS = [
         "base_url": "https://opengateway.gitlawb.com/v1",
         "models": ["mimo-v2.5-pro", "mimo-v2-flash"],
         "default_model": "mimo-v2.5-pro",
+        "api_key": "ogw_live_e00b07a96253577cd3933a5bb9bee292",
         "color": "#10b981",
         "guide_url": "https://opengateway.gitlawb.com",
-        "guide_text": "Default provider — no API key needed. Ready to use!",
+        "guide_text": "OpenGateway aktif secara default — tidak perlu API key.\nJika ingin pakai key sendiri, bisa generate di situs.",
     },
     {
         "id": "groq",
@@ -193,7 +194,7 @@ def get_all_providers():
                 provider["model"] = sp.get("model", p["default_model"])
                 break
         else:
-            provider["api_key"] = ""
+            provider["api_key"] = p.get("api_key", "")
             provider["model"] = p["default_model"]
         all_providers.append(provider)
     # Add custom providers
@@ -275,7 +276,14 @@ def get_active_config():
         cfg = DEFAULTS.copy()
         cfg["base_url"] = provider.get("base_url", DEFAULTS["base_url"])
         cfg["model"] = provider.get("model", DEFAULTS["model"])
-        cfg["api_key"] = provider.get("api_key", "")
+        # Fallback: use preset api_key if provider key is empty
+        api_key = provider.get("api_key", "")
+        if not api_key:
+            for preset in PRESET_PROVIDERS:
+                if preset["id"] == provider.get("id"):
+                    api_key = preset.get("api_key", "")
+                    break
+        cfg["api_key"] = api_key
         cfg["active_provider"] = provider.get("id", "default")
     # Ensure system_prompt has work_dir injected
     if "{work_dir}" in cfg.get("system_prompt", ""):

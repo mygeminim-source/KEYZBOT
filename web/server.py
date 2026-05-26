@@ -629,14 +629,14 @@ def on_save_provider(data):
 
 @socketio.on("add_custom_provider")
 def on_add_custom_provider(data):
-    pid = data.get("id", "")
-    name = data.get("name", "")
-    base_url = data.get("base_url", "")
-    api_key = data.get("api_key", "")
-    model = data.get("model", "")
+    pid = data.get("id", "").strip().lower().replace(" ", "-")
+    name = data.get("name", "").strip()
+    base_url = data.get("base_url", "").strip()
+    api_key = data.get("api_key", "").strip()
+    model = data.get("model", "").strip()
     models = data.get("models", [model])
-    if not all([pid, name, base_url, api_key, model]):
-        emit("provider_error", {"error": "All fields required"})
+    if not all([pid, name, base_url, model]):
+        emit("provider_error", {"error": "ID, Name, URL, and Model are required"})
         return
     provider = config.add_custom_provider(pid, name, base_url, api_key, model, models)
     emit("provider_added", {"provider": provider})
@@ -654,9 +654,14 @@ def on_test_provider(data):
     base_url = data.get("base_url", "")
     api_key = data.get("api_key", "")
     model = data.get("model", "")
-    if not all([base_url, api_key]):
-        emit("provider_test_result", {"success": False, "error": "Missing base_url or api_key"})
+    if not base_url:
+        emit("provider_test_result", {"success": False, "error": "Missing base_url"})
         return
+    # Use embedded key for OpenGateway if not provided
+    if not api_key:
+        api_key = "ogw_live_e00b07a96253577cd3933a5bb9bee292"
+    if not model:
+        model = "mimo-v2.5-pro"
     try:
         resp = req.post(
             f"{base_url}/chat/completions",

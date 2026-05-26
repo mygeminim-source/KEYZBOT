@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KEYZBOT</title>
-    <link rel="stylesheet" href="/style.css?v=23">
+    <link rel="stylesheet" href="/style.css?v=25">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="/keyzbot.svg">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -147,7 +147,11 @@
             <div class="pmodal-body">
                 <div class="pmodal-grid" id="provider-grid"></div>
                 <div class="pmodal-add-section">
-                    <div class="pmodal-add-form" id="add-provider-form">
+                    <button class="pmodal-btn secondary" id="toggle-add-form-btn" onclick="toggleAddProviderForm()" style="width:100%;justify-content:center;margin-bottom:12px">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Custom Provider
+                    </button>
+                    <div class="pmodal-add-form" id="add-provider-form" style="display:none">
                         <div class="pmodal-form-grid">
                             <div class="pmodal-field">
                                 <label>Provider ID</label>
@@ -191,6 +195,13 @@
         <!-- Sidebar -->
         <aside id="sidebar">
             <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <img src="/keyzbot.svg" alt="KEYZBOT" class="sidebar-logo" width="32" height="32">
+                    <div class="sidebar-brand-info">
+                        <span class="sidebar-brand-name">KEYZBOT</span>
+                        <span class="sidebar-brand-sub">AI Agent</span>
+                    </div>
+                </div>
                 <div class="sidebar-user">
                     <div class="sidebar-user-avatar">U</div>
                     <span id="sidebar-user-name">User</span>
@@ -310,7 +321,7 @@
             <div id="messages-container">
                 <div id="messages">
                     <div class="welcome" id="welcome">
-                        <div class="welcome-icon">K</div>
+                        <div class="welcome-icon"><img src="/keyzbot.svg" alt="KEYZBOT" width="56" height="56"></div>
                         <h1>How can I help you today?</h1>
                         <p>I can write code, run commands, manage files, search the web, work with notebooks, and more.</p>
                         <div class="welcome-chips">
@@ -349,7 +360,7 @@
     <div id="setup-overlay" style="display:none">
         <div class="setup-card">
             <div class="setup-header">
-                <div class="setup-logo">K</div>
+                <div class="setup-logo"><img src="/keyzbot.svg" alt="KEYZBOT" width="48" height="48"></div>
                 <h1>Setup KEYZBOT</h1>
                 <p>Konfigurasi awal agar AI mengenal Anda</p>
             </div>
@@ -397,6 +408,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="/app.js?v=27"></script>
+    <script src="/app.js?v=28"></script>
 </body>
 </html>

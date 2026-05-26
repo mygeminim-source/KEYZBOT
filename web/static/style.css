@@ -57,6 +57,25 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #sidebar.hidden{margin-left:calc(-1*var(--sidebar-w))}
 
 .sidebar-header{padding:16px 14px 8px;flex-shrink:0}
+.sidebar-brand{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0 12px;margin-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo{
+  width:36px;height:36px;border-radius:10px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));
+}
+.sidebar-brand-info{display:flex;flex-direction:column}
+.sidebar-brand-name{
+  font-size:16px;font-weight:800;letter-spacing:-.3px;
+  background:var(--gradient);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+}
+.sidebar-brand-sub{
+  font-size:10px;color:var(--text3);letter-spacing:.8px;
+  text-transform:uppercase;font-weight:600;margin-top:1px;
+}
 #new-chat-btn{
   width:100%;display:flex;align-items:center;gap:10px;
   padding:11px 14px;border:1px solid var(--border2);border-radius:var(--radius-sm);
@@ -214,7 +233,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   width:72px;height:72px;border-radius:20px;
   background:var(--gradient);
   display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:28px;color:#fff;
+  overflow:hidden;
   box-shadow:0 12px 40px rgba(139,92,246,.35);
   position:relative;
 }
@@ -719,7 +738,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   border:1px solid var(--border);border-radius:12px;
   background:var(--surface);
 }
-.pmodal-form-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.pmodal-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pmodal-field{display:flex;flex-direction:column;gap:4px}
 .pmodal-field label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 .pmodal-field input{
@@ -822,6 +841,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .pcard-edit.show{display:block}
 .pcard-edit-grid{display:grid;grid-template-columns:1fr;gap:10px;padding-top:14px}
+.pmodal-field.full{grid-column:1/-1}
 .pcard-edit-grid .pmodal-field.full{grid-column:1/-1}
 .pcard-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .pcard-test-result{
@@ -905,9 +925,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .setup-header{text-align:center;margin-bottom:28px}
 .setup-logo{
   width:56px;height:56px;border-radius:14px;
-  background:var(--accent);color:#fff;
+  background:var(--accent);
   display:inline-flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:800;margin-bottom:12px;
+  overflow:hidden;margin-bottom:12px;
 }
 .setup-header h1{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
 .setup-header p{font-size:13px;color:var(--text3)}

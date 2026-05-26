@@ -1196,7 +1196,10 @@ function _createHamburgerMenu() {
     menu.className = 'hamburger-menu hidden';
     menu.innerHTML = `
         <div class="hamburger-header">
-            <span class="hamburger-title">Settings</span>
+            <div style="display:flex;align-items:center;gap:10px">
+                <img src="/keyzbot.svg" width="24" height="24" style="border-radius:6px">
+                <span class="hamburger-title">KEYZBOT</span>
+            </div>
             <button class="hamburger-close" onclick="closeHamburger()">&times;</button>
         </div>
         <div class="hamburger-body">
@@ -1204,7 +1207,7 @@ function _createHamburgerMenu() {
                 <div class="hamburger-section-title">Active Provider</div>
                 <div class="hamburger-provider-card" onclick="openProviderModal()">
                     <div class="hamburger-provider-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                        <img src="/keyzbot.svg" width="24" height="24" style="border-radius:6px">
                     </div>
                     <div class="hamburger-provider-info">
                         <span class="provider-name" id="menu-provider-name">-</span>
@@ -1424,6 +1427,9 @@ function renderProviderGrid() {
 }
 
 function getProviderIcon(id, color) {
+    if (id === 'opengateway') {
+        return `<img src="/keyzbot.svg" width="36" height="36" style="border-radius:10px">`;
+    }
     const c = color || '#6b7280';
     const letters = id.substring(0, 2).toUpperCase();
     return `<div style="width:36px;height:36px;border-radius:10px;background:${c}20;color:${c};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;letter-spacing:-0.5px">${letters}</div>`;
@@ -1491,17 +1497,35 @@ function removeProvider(id) {
     }
 }
 
+function toggleAddProviderForm() {
+    const form = document.getElementById('add-provider-form');
+    if (!form) return;
+    const btn = document.getElementById('toggle-add-form-btn');
+    if (form.style.display === 'none') {
+        form.style.display = '';
+        if (btn) btn.style.display = 'none';
+    } else {
+        form.style.display = 'none';
+        if (btn) btn.style.display = '';
+    }
+}
+
 function addCustomProvider() {
-    const id = document.getElementById('custom-id').value.trim();
+    const id = document.getElementById('custom-id').value.trim().toLowerCase().replace(/\s+/g, '-');
     const name = document.getElementById('custom-name').value.trim();
     const url = document.getElementById('custom-url').value.trim();
     const key = document.getElementById('custom-key').value.trim();
     const model = document.getElementById('custom-model').value.trim();
-    if (!id || !name || !url || !key || !model) {
-        statusBar.textContent = "All fields required";
+    if (!id || !name || !url || !model) {
+        statusBar.textContent = "ID, Name, URL, and Model are required";
         return;
     }
     socket.emit("add_custom_provider", {id, name, base_url: url, api_key: key, model, models: [model]});
     ['custom-id','custom-name','custom-url','custom-key','custom-model'].forEach(x => document.getElementById(x).value = '');
+    // Hide form, show button again
+    document.getElementById('add-provider-form').style.display = 'none';
+    const toggleBtn = document.getElementById('toggle-add-form-btn');
+    if (toggleBtn) toggleBtn.style.display = '';
+    statusBar.textContent = `Provider "${name}" added`;
 }
 
