@@ -784,6 +784,15 @@ def start_web(host="0.0.0.0", port=8080, open_browser=True):
             print(f"  \033[90mCleaned {cleaned} orphan history file(s)\033[0m")
     threading.Thread(target=_cleanup_orphans, daemon=True).start()
 
+    # Init activity reporter
+    try:
+        from core import activity
+        _cfg = config.get_active_config() or config.DEFAULTS
+        if _cfg.get("activity_enabled", True):
+            activity.init(_cfg.get("activity_endpoint", ""), _cfg.get("activity_client_token", ""))
+    except Exception:
+        pass
+
     print()
     print(f"  \033[96m\033[1mKEYZBOT v9.1 Web Terminal\033[0m")
     print(f"  \033[90m{'━' * 40}\033[0m")
