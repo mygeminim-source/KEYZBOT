@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/mygeminim-source/KEYZBOT/master/web/static/keyzbot.svg" alt="KEYZBOT" width="96" height="96" style="border-radius:20px">
-
 # KEYZBOT
 
 **Full-Stack Autonomous AI Agent**
