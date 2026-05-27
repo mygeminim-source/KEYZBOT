@@ -14,7 +14,9 @@ function closeSidebar() {
 // ─── Session Management ──────────────────────────────────────────────────────
 function renderSessions(chats) {
     const list = document.getElementById("sessions-list");
+    if (!list) return;
     list.innerHTML = "";
+    if (!chats || !Array.isArray(chats)) return;
     chats.forEach(chat => {
         const item = document.createElement("div");
         item.className = "session-item" + (chat.id === activeChatId ? " active" : "");

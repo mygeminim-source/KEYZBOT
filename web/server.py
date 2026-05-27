@@ -107,6 +107,8 @@ _streaming_chats = {}  # (browser_id, chat_id) -> True
 # Accumulated partial text during streaming (for reconnect recovery)
 _stream_buffers = {}  # (browser_id, chat_id) -> {"text": str, "started": bool, "done": bool}
 _SESSION_TTL = 3600  # 1 hour
+# Map socket session ID to browser_id (for disconnect lookup)
+_sid_to_bid = {}  # request.sid -> browser_id
 
 # ─── User Profile ────────────────────────────────────────────────────────────
 _load_profile = _profile.load
@@ -401,8 +403,11 @@ def api_export(fmt):
 
 # ─── SocketIO Events ─────────────────────────────────────────────────────────
 def _get_browser_id():
-    """Get persistent browser ID from query param, fallback to request.sid."""
-    return request.args.get("browser_id", request.sid)
+    """Get persistent browser ID from query param, or lookup from sid mapping."""
+    bid = request.args.get("browser_id")
+    if bid:
+        return bid
+    return _sid_to_bid.get(request.sid, request.sid)
 
 def _get_term_sid():
     """Get the actual Socket.IO session ID for terminal emits."""
@@ -411,6 +416,8 @@ def _get_term_sid():
 @socketio.on("connect")
 def on_connect():
     bid = _get_browser_id()
+    # Register sid -> browser_id mapping for disconnect lookup
+    _sid_to_bid[request.sid] = bid
     if _AUTH_TOKEN and bid not in _authenticated_sids:
         emit("auth_required", {"message": "Token required"})
         return
@@ -452,7 +459,9 @@ def on_connect():
 @socketio.on("disconnect")
 def on_disconnect():
     close_terminal(request.sid)
-    bid = _get_browser_id()
+    bid = _sid_to_bid.pop(request.sid, None)
+    if not bid:
+        bid = _get_browser_id()
     if bid in _user_sessions:
         web_sessions.save_session(bid, _user_sessions[bid])
         # Keep session in memory — TTL cleanup handles stale sessions
