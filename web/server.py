@@ -384,9 +384,12 @@ def on_connect():
     # Join browser_id room so safe_emit can reach this client after reconnect
     join_room(bid)
     _get_user(bid)
-    join_room(bid)
     _start_cron()
     user = _user_sessions[bid]
+    # Clean up stale buffers (done=True for completed streams)
+    stale_keys = [k for k, v in _stream_buffers.items() if k[0] == bid and v.get("done")]
+    for sk in stale_keys:
+        _stream_buffers.pop(sk, None)
     # Build messages for active chat
     messages = []
     active_chat = user["chats"].get(user["active_chat"])
@@ -399,7 +402,7 @@ def on_connect():
     is_streaming = key in _streaming_chats
     buf = _stream_buffers.get(key, {})
     emit("connected", {
-        "version": "9.1",
+        "version": "10.1",
         "chats": _make_chat_summary(user),
         "active_chat": user["active_chat"],
         "messages": messages,
@@ -415,7 +418,6 @@ def on_connect():
 def on_disconnect():
     close_terminal(request.sid)
     bid = _get_browser_id()
-    leave_room(bid)
     if bid in _user_sessions:
         web_sessions.save_session(bid, _user_sessions[bid])
         # Don't remove session if any chat is still streaming
@@ -733,16 +735,29 @@ def on_update_now():
         emit("update_status", {"status": "error", "message": str(e)})
 
 def _update_checker_loop():
-    """Background thread: check for updates every 5 minutes."""
+    """Background thread: check for updates every 5 minutes, auto-apply."""
     global _update_available, _latest_commit
     while True:
         time.sleep(300)
-        behind, commit = _git_check()
-        if behind:
+        try:
+            behind, commit = _git_check()
+            if not behind:
+                continue
             _update_available = True
             _latest_commit = commit
             socketio.emit("update_available", {"commit": commit})
-            print(f"\033[93m[KEYZBOT] Update available: {commit}\033[0m")
+            print(f"\033[93m[KEYZBOT] Update available: {commit}. Auto-updating in 30s...\033[0m")
+            # Wait 30s for user to finish current interaction
+            time.sleep(30)
+            # Wait for all active streams to finish (max 5 min)
+            for _ in range(60):
+                if not _streaming_chats:
+                    break
+                time.sleep(5)
+            # Now pull and restart
+            _git_pull_restart()
+        except Exception:
+            pass
 
 
 

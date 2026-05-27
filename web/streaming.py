@@ -115,9 +115,10 @@ def stream_chat(sid, bot, user_input, chat_id="", images=None, get_browser_id=No
                            stream_buffers=stream_buffers, key=key)
     finally:
         sc.pop(key, None)
-        if stream_buffers is not None:
-            buf = stream_buffers.get(key, {})
-            buf["done"] = True
+        # Mark buffer as done but DON'T pop it — reconnecting client needs to read it.
+        # Cleanup happens on next connect (server.py).
+        if stream_buffers is not None and key in stream_buffers:
+            stream_buffers[key]["done"] = True
 
 
 def _emit(event, data=None, room=None):
@@ -286,15 +287,11 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
             bot._update_cost(0, out_toks)
         _emit("chat_done", {"text": full_text, "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id}, room=browser_id)
         _emit("status", make_status(bot), room=browser_id)
-        if stream_buffers and key:
-            stream_buffers.pop(key, None)
         if user_sessions and browser_id in user_sessions:
             web_sessions.save_session(browser_id, user_sessions[browser_id])
         return
 
     _emit("chat_done", {"text": full_text or "(max rounds)", "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id}, room=browser_id)
     _emit("status", make_status(bot), room=browser_id)
-    if stream_buffers and key:
-        stream_buffers.pop(key, None)
     if user_sessions and browser_id in user_sessions:
         web_sessions.save_session(browser_id, user_sessions[browser_id])

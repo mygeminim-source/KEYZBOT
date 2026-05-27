@@ -44,17 +44,22 @@ socket.on("connected", (data) => {
         const verEl = document.getElementById("sidebar-version");
         if (verEl) {
             if (data.update_available) {
-                verEl.textContent = "v" + data.version + " (update tersedia)";
+                verEl.textContent = "v" + data.version + " (auto-updating...)";
                 verEl.style.color = "var(--accent)";
                 verEl.style.opacity = "1";
-                verEl.style.cursor = "pointer";
-                verEl.onclick = doUpdate;
             } else {
                 verEl.textContent = "v" + data.version;
             }
         }
     }
-    if (data.update_available) showUpdateToast();
+    if (data.update_available) {
+        const toast = document.getElementById("update-toast");
+        const btn = document.getElementById("update-btn");
+        const status = document.getElementById("update-status");
+        if (toast) toast.style.display = "block";
+        if (btn) btn.style.display = "none";
+        if (status) { status.style.display = "block"; status.textContent = "Auto-updating..."; status.style.color = "var(--accent)"; }
+    }
 });
 
 // ── Update Toast ─────────────────────────────────────────────────────────────
@@ -74,14 +79,28 @@ function doUpdate() {
     socket.emit("update_now");
 }
 
-socket.on("update_available", () => showUpdateToast());
+socket.on("update_available", (data) => {
+    // Auto-update is now server-side — just show status to user
+    const toast = document.getElementById("update-toast");
+    const btn = document.getElementById("update-btn");
+    const status = document.getElementById("update-status");
+    if (toast) toast.style.display = "block";
+    if (btn) { btn.style.display = "none"; }
+    if (status) { status.style.display = "block"; status.textContent = "Auto-updating in 30s..."; status.style.color = "var(--accent)"; }
+});
 socket.on("update_status", (data) => {
     const status = document.getElementById("update-status");
     const btn = document.getElementById("update-btn");
-    status.style.display = "block";
-    status.textContent = data.message || "";
-    if (data.status === "restarting") { btn.textContent = "Restarting..."; status.textContent = "Server sedang restart..."; }
-    else if (data.status === "error") { btn.disabled = false; btn.textContent = "Update Now"; status.style.color = "#ef4444"; }
+    if (status) { status.style.display = "block"; status.textContent = data.message || ""; status.style.color = "var(--accent)"; }
+    if (btn) btn.style.display = "none";
+    if (data.status === "restarting") {
+        if (status) status.textContent = "Server sedang restart...";
+        // Auto-reload after 3 seconds
+        setTimeout(() => location.reload(), 3000);
+    }
+    else if (data.status === "error") {
+        if (status) { status.textContent = "Update failed: " + (data.message || "unknown"); status.style.color = "#ef4444"; }
+    }
 });
 
 socket.on("status", (s) => {
@@ -208,7 +227,8 @@ socket.on("bot_stream_end", (data) => {
         checkTableScroll(streamContentEl);
     }
     streamEl = null; streamContentEl = null; streamRawText = "";
-    isStreaming = false;
+    // Don't reset isStreaming here — tool calls may follow before next round.
+    // isStreaming resets on chat_done or chat_error only.
     scrollBottom();
 });
 
