@@ -118,18 +118,20 @@ def execute(name, args, work_dir=None):
 
             # Try Stable Diffusion via API (free tier)
             try:
-                import requests
+                import requests as _req
+                _s = _req.Session()
+                _s.trust_env = False
                 # Try Pollinations.ai (free, no API key)
                 styled_prompt = f"{prompt}, {style} style" if style != "realistic" else prompt
-                url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(styled_prompt)}?width={width}&height={height}&nologo=true"
-                resp = requests.get(url, timeout=60, stream=True)
+                url = f"https://image.pollinations.ai/prompt/{_req.utils.quote(styled_prompt)}?width={width}&height={height}&nologo=true"
+                resp = _s.get(url, timeout=60, stream=True)
                 if resp.status_code == 200:
                     with open(output, "wb") as f:
                         for chunk in resp.iter_content(8192):
                             f.write(chunk)
                     if os.path.getsize(output) > 1000:
                         return json.dumps({"type": "image", "path": output, "prompt": prompt, "style": style, "size": f"{width}x{height}"})
-            except:
+            except Exception:
                 pass
 
             # Fallback: generate a placeholder image with prompt text

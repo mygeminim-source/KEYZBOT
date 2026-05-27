@@ -381,15 +381,10 @@ def on_connect():
     if _AUTH_TOKEN and bid not in _authenticated_sids:
         emit("auth_required", {"message": "Token required"})
         return
-    # Join browser_id room so safe_emit can reach this client after reconnect
     join_room(bid)
     _get_user(bid)
     _start_cron()
     user = _user_sessions[bid]
-    # Clean up stale buffers (done=True for completed streams)
-    stale_keys = [k for k, v in _stream_buffers.items() if k[0] == bid and v.get("done")]
-    for sk in stale_keys:
-        _stream_buffers.pop(sk, None)
     # Build messages for active chat
     messages = []
     active_chat = user["chats"].get(user["active_chat"])
@@ -401,18 +396,25 @@ def on_connect():
     key = (bid, user["active_chat"])
     is_streaming = key in _streaming_chats
     buf = _stream_buffers.get(key, {})
+    # Include stream_text even when done — client needs it for reconnect rendering
+    stream_text = buf.get("text", "")
+    stream_done = buf.get("done", False)
     emit("connected", {
-        "version": "10.1",
+        "version": "10.2",
         "chats": _make_chat_summary(user),
         "active_chat": user["active_chat"],
         "messages": messages,
         "streaming": is_streaming,
-        "stream_text": buf.get("text", ""),
-        "stream_done": buf.get("done", False),
+        "stream_text": stream_text,
+        "stream_done": stream_done,
         "profile": _load_profile(),
         "update_available": _update_available,
         "latest_commit": _latest_commit,
     })
+    # Clean up stale buffers AFTER emitting connected (so client reads them first)
+    stale_keys = [k for k, v in _stream_buffers.items() if k[0] == bid and v.get("done")]
+    for sk in stale_keys:
+        _stream_buffers.pop(sk, None)
 
 @socketio.on("disconnect")
 def on_disconnect():

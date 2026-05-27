@@ -1,4 +1,10 @@
 /* KEYZBOT Socket Events — all socket.on handlers */
+// Reconnect buffer: chunks arriving before 'connected' are buffered here
+let _reconnectBuffer = [];
+let _awaitingConnect = false;
+
+socket.io.on("reconnect_attempt", () => { _awaitingConnect = true; _reconnectBuffer = []; });
+
 // ─── Socket Events ───────────────────────────────────────────────────────────
 socket.on("connected", (data) => {
     statusBar.textContent = "Connected";
@@ -8,6 +14,9 @@ socket.on("connected", (data) => {
     renderSessions(data.chats);
     fetchConfig();
     if (data.profile && !data.profile.setup_complete) showSetupModal();
+    // Reset stream state before restoring
+    streamEl = null; streamContentEl = null; streamRawText = "";
+    isStreaming = false; hadStream = false;
     if (data.messages && data.messages.length > 0) {
         clearMessages(); hideWelcome();
         data.messages.forEach(m => {
@@ -26,20 +35,29 @@ socket.on("connected", (data) => {
             const { row, contentEl } = createBotMessage();
             streamEl = row; streamContentEl = contentEl;
             messagesEl.appendChild(row);
-            if (data.stream_done) {
-                contentEl.innerHTML = renderMarkdown(streamRawText);
-                highlightCode(contentEl); addCopyButtons(contentEl); checkTableScroll(contentEl);
-                streamEl = null; streamContentEl = null; streamRawText = "";
-                isStreaming = false;
-            } else {
-                contentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
-                highlightCode(contentEl); checkTableScroll(contentEl);
-            }
+            contentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
+            highlightCode(contentEl); checkTableScroll(contentEl);
             scrollBottom();
         } else {
             addThinking();
         }
+    } else if (data.stream_done && data.stream_text && data.stream_text.length > 0) {
+        // Stream finished while we were disconnected — render the final text
+        hideWelcome(); removeThinking();
+        addBotMessage(data.stream_text);
+        scrollBottom();
     }
+    // Flush buffered chunks that arrived during reconnect
+    _awaitingConnect = false;
+    if (_reconnectBuffer.length > 0 && streamContentEl) {
+        _reconnectBuffer.forEach(chunk => {
+            streamRawText = (streamRawText || "") + chunk;
+        });
+        streamContentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
+        highlightCode(streamContentEl); checkTableScroll(streamContentEl);
+        scrollBottom();
+    }
+    _reconnectBuffer = [];
     if (data.version) {
         const verEl = document.getElementById("sidebar-version");
         if (verEl) {
@@ -205,6 +223,11 @@ socket.on("bot_stream_start", (data) => {
 
 socket.on("bot_stream_chunk", (data) => {
     if (data.chat_id && data.chat_id !== activeChatId) return;
+    // Buffer chunks during reconnect (before 'connected' event arrives)
+    if (_awaitingConnect) {
+        _reconnectBuffer.push(data.text);
+        return;
+    }
     if (!streamContentEl) {
         removeThinking(); hadStream = true; isStreaming = true; streamRawText = "";
         const { row, contentEl } = createBotMessage();
