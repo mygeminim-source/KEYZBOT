@@ -1,9 +1,4 @@
 /* KEYZBOT Socket Events — all socket.on handlers */
-// Reconnect buffer: chunks arriving before 'connected' are buffered here
-let _reconnectBuffer = [];
-let _awaitingConnect = false;
-
-socket.io.on("reconnect_attempt", () => { _awaitingConnect = true; _reconnectBuffer = []; });
 
 // ─── Socket Events ───────────────────────────────────────────────────────────
 socket.on("connected", (data) => {
@@ -14,7 +9,7 @@ socket.on("connected", (data) => {
     renderSessions(data.chats);
     fetchConfig();
     if (data.profile && !data.profile.setup_complete) showSetupModal();
-    // Reset stream state before restoring
+    // Reset stream state
     streamEl = null; streamContentEl = null; streamRawText = "";
     isStreaming = false; hadStream = false;
     if (data.messages && data.messages.length > 0) {
@@ -28,36 +23,15 @@ socket.on("connected", (data) => {
         scrollBottom();
     }
     if (data.streaming) {
-        if (data.stream_text && data.stream_text.length > 0) {
-            // Restore partial streaming text from before refresh
-            hideWelcome(); removeThinking(); hadStream = true; isStreaming = true;
-            streamRawText = data.stream_text;
-            const { row, contentEl } = createBotMessage();
-            streamEl = row; streamContentEl = contentEl;
-            messagesEl.appendChild(row);
-            contentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
-            highlightCode(contentEl); checkTableScroll(contentEl);
-            scrollBottom();
-        } else {
-            addThinking();
-        }
+        // AI still processing — just show thinking animation
+        isStreaming = true; hadStream = true;
+        addThinking();
     } else if (data.stream_done && data.stream_text && data.stream_text.length > 0) {
-        // Stream finished while we were disconnected — render the final text
-        hideWelcome(); removeThinking();
+        // Stream finished while disconnected — render final text
+        hideWelcome();
         addBotMessage(data.stream_text);
         scrollBottom();
     }
-    // Flush buffered chunks that arrived during reconnect
-    _awaitingConnect = false;
-    if (_reconnectBuffer.length > 0 && streamContentEl) {
-        _reconnectBuffer.forEach(chunk => {
-            streamRawText = (streamRawText || "") + chunk;
-        });
-        streamContentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
-        highlightCode(streamContentEl); checkTableScroll(streamContentEl);
-        scrollBottom();
-    }
-    _reconnectBuffer = [];
     if (data.version) {
         const verEl = document.getElementById("sidebar-version");
         if (verEl) {
@@ -213,45 +187,24 @@ socket.on("chat_start", (data) => {
 
 socket.on("bot_stream_start", (data) => {
     if (data.chat_id && data.chat_id !== activeChatId) return;
-    removeThinking(); hadStream = true; isStreaming = true; streamRawText = "";
-    lastToolCall = null; toolCallDone = false; toolCallEl = null;
-    const { row, contentEl } = createBotMessage();
-    streamEl = row; streamContentEl = contentEl;
-    messagesEl.appendChild(row);
-    scrollBottom();
+    hadStream = true; isStreaming = true; streamRawText = "";
+    // Keep thinking animation — text shows on bot_stream_end
 });
 
 socket.on("bot_stream_chunk", (data) => {
     if (data.chat_id && data.chat_id !== activeChatId) return;
-    // Buffer chunks during reconnect (before 'connected' event arrives)
-    if (_awaitingConnect) {
-        _reconnectBuffer.push(data.text);
-        return;
-    }
-    if (!streamContentEl) {
-        removeThinking(); hadStream = true; isStreaming = true; streamRawText = "";
-        const { row, contentEl } = createBotMessage();
-        streamEl = row; streamContentEl = contentEl;
-        messagesEl.appendChild(row);
-    }
+    // Just accumulate — don't render yet
     streamRawText = (streamRawText || "") + data.text;
-    streamContentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
-    highlightCode(streamContentEl);
-    checkTableScroll(streamContentEl);
-    scrollBottom();
 });
 
 socket.on("bot_stream_end", (data) => {
     if (data.chat_id && data.chat_id !== activeChatId) return;
-    if (streamContentEl) {
-        const cursor = streamContentEl.querySelector('.cursor');
-        if (cursor) cursor.remove();
-        addCopyButtons(streamContentEl);
-        checkTableScroll(streamContentEl);
+    // Now render the full text at once
+    removeThinking();
+    if (streamRawText) {
+        addBotMessage(streamRawText);
     }
     streamEl = null; streamContentEl = null; streamRawText = "";
-    // Don't reset isStreaming here — tool calls may follow before next round.
-    // isStreaming resets on chat_done or chat_error only.
     scrollBottom();
 });
 
