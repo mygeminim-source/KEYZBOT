@@ -455,9 +455,10 @@ def on_disconnect():
     bid = _get_browser_id()
     if bid in _user_sessions:
         web_sessions.save_session(bid, _user_sessions[bid])
-        # Don't remove session if any chat is still streaming
+        # Don't remove session if any chat is still streaming or has pending buffer
         has_streaming = any(k[0] == bid for k in _streaming_chats)
-        if not has_streaming:
+        has_buffer = any(k[0] == bid for k in _stream_buffers)
+        if not has_streaming and not has_buffer:
             _user_sessions.pop(bid, None)
 
 @socketio.on("new_chat")

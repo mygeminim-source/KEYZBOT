@@ -11,23 +11,27 @@ socket.on("connected", (data) => {
     renderSessions(data.chats);
     fetchConfig();
     if (data.profile && !data.profile.setup_complete) showSetupModal();
-    // Reset stream state first
+    // Reset stream state first — must clear thinkingEl before clearMessages
     streamEl = null; streamContentEl = null; streamRawText = "";
     isStreaming = false; hadStream = false;
     _suppressThinking = false;
+    removeThinking();
+    // Render messages for active chat
     if (data.messages && data.messages.length > 0) {
         clearMessages(); hideWelcome();
-        data.messages.forEach(m => {
-            if (m.type === "user") addUserMessage(m.text, m.images);
-            else if (m.type === "bot") addBotMessage(m.text);
-            else if (m.type === "tool_call") addToolCall(m.name, m.args);
-            else if (m.type === "tool_result") addToolResultDirect(m.text);
-            else if (m.type === "media") renderMediaMessage(m.media);
-        });
+        try {
+            data.messages.forEach(m => {
+                if (m.type === "user") addUserMessage(m.text, m.images);
+                else if (m.type === "bot") addBotMessage(m.text);
+                else if (m.type === "tool_call") addToolCall(m.name, m.args);
+                else if (m.type === "tool_result") addToolResultDirect(m.text);
+                else if (m.type === "media") renderMediaMessage(m.media);
+            });
+        } catch (e) { console.warn("Message render error:", e); }
         scrollBottom();
     }
+    // Restore streaming/thinking state AFTER messages render
     if (data.streaming) {
-        // Stream still active on server — restore streaming state
         isStreaming = true; hadStream = true;
         streamRawText = data.stream_text || "";
         addThinking();
@@ -125,6 +129,8 @@ socket.on("chat_switched", (data) => {
     activeChatId = data.active_chat;
     streamEl = null; streamContentEl = null; streamRawText = "";
     hadStream = false; isStreaming = false;
+    _suppressThinking = false;
+    removeThinking();
     renderSessions(data.chats);
     clearMessages();
     if (data.messages && data.messages.length > 0) {
