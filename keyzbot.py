@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KEYZBOT v9.0 - Full AI Coding Agent CLI
+KEYZBOT v10.2 - Full AI Coding Agent CLI
 Created by KEYZ — Feature-complete like OpenClaude
 """
 
