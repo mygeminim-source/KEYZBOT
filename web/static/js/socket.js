@@ -11,9 +11,10 @@ socket.on("connected", (data) => {
     renderSessions(data.chats);
     fetchConfig();
     if (data.profile && !data.profile.setup_complete) showSetupModal();
-    // Reset stream state
+    // Reset stream state first
     streamEl = null; streamContentEl = null; streamRawText = "";
     isStreaming = false; hadStream = false;
+    _suppressThinking = false;
     if (data.messages && data.messages.length > 0) {
         clearMessages(); hideWelcome();
         data.messages.forEach(m => {
@@ -26,12 +27,18 @@ socket.on("connected", (data) => {
         scrollBottom();
     }
     if (data.streaming) {
+        // Stream still active on server — restore streaming state
         isStreaming = true; hadStream = true;
+        streamRawText = data.stream_text || "";
         addThinking();
     } else if (data.stream_done && data.stream_text && data.stream_text.length > 0) {
+        // Stream finished while we were disconnected — show final text
         hideWelcome();
         addBotMessage(data.stream_text);
         scrollBottom();
+    } else if (data.streaming === false && data.stream_done === false) {
+        // No stream data at all — make sure isStreaming is reset
+        isStreaming = false; hadStream = false;
     }
     if (data.version) {
         const verEl = document.getElementById("sidebar-version");
