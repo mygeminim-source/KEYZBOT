@@ -47,7 +47,23 @@ socket.on("connected", (data) => {
     }
     // Restore thinking animation if chat is still streaming
     if (data.streaming) {
-        showThinking();
+        if (data.stream_text && data.stream_text.length > 0) {
+            // We already have partial text — show it in a stream element
+            hideWelcome();
+            hadStream = true;
+            isStreaming = true;
+            streamRawText = data.stream_text;
+            const { row, contentEl } = createBotMessage();
+            streamEl = row; streamContentEl = contentEl;
+            contentEl.innerHTML = renderMarkdown(streamRawText) + '<span class="cursor"></span>';
+            highlightCode(contentEl);
+            checkTableScroll(contentEl);
+            messagesEl.appendChild(row);
+            scrollToBottom();
+        } else {
+            // No text yet, just show thinking
+            showThinking();
+        }
     }
     // Show update toast if update available
     if (data.update_available) {
@@ -173,7 +189,8 @@ socket.on("chat_deleted", (data) => {
 });
 
 socket.on("command_result", (data) => {
-    removeThinking();
+    // Don't remove thinking if streaming is still active
+    if (!isStreaming) removeThinking();
     // /clear or /reset — clear messages with smooth transition, no result text
     if (data.command && (data.command === "/clear" || data.command.startsWith("/clear ") || data.command === "/reset")) {
         clearChatUI();
@@ -186,7 +203,7 @@ socket.on("command_result", (data) => {
 
 socket.on("ephemeral_result", (data) => {
     hideWelcome();
-    removeThinking();
+    if (!isStreaming) removeThinking();
     addEphemeralMessage(data.text, 60000);
 });
 

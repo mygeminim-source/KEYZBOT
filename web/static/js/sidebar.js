@@ -195,6 +195,12 @@ function updateHamburgerInfo() { socket.emit("get_providers"); }
 function send() {
     const text = input.value.trim();
     if (!text && pendingImages.length === 0) return;
+    // Guard: don't send while streaming — queue or show warning
+    if (isStreaming) {
+        addError("Please wait — the current response is still being generated.");
+        scrollBottom();
+        return;
+    }
     const images = pendingImages.slice();
     pendingImages = [];
     renderImagePreviews();

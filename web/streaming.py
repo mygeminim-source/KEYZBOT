@@ -4,11 +4,23 @@ import json, time, os, sys
 from flask_socketio import emit
 from core import config, agent, web_sessions, subagents
 
+_socketio = None
 
-def safe_emit(event, data=None, to=None):
-    """Emit that silently ignores disconnects — server keeps processing."""
+
+def set_socketio(sio):
+    """Set the SocketIO instance for room-based emits."""
+    global _socketio
+    _socketio = sio
+
+
+def safe_emit(event, data=None, to=None, room=None):
+    """Emit that silently ignores disconnects — server keeps processing.
+    If room is given, uses socketio.emit to target the room (survives reconnects).
+    Otherwise falls back to flask emit (current request.sid)."""
     try:
-        if to:
+        if room and _socketio:
+            _socketio.emit(event, data or {}, to=room)
+        elif to:
             emit(event, data or {}, to=to)
         else:
             emit(event, data or {})
@@ -108,6 +120,11 @@ def stream_chat(sid, bot, user_input, chat_id="", images=None, get_browser_id=No
             buf["done"] = True
 
 
+def _emit(event, data=None, room=None):
+    """Convenience wrapper for safe_emit with room."""
+    safe_emit(event, data, room=room)
+
+
 def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                        get_browser_id=None, user_sessions=None,
                        stream_buffers=None, key=None):
@@ -115,6 +132,9 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
     # Direct connection — bypass system SOCKS5/HTTP proxy
     session = req.Session()
     session.trust_env = False
+
+    # Resolve browser_id for room-based emit (survives reconnects)
+    browser_id = get_browser_id() if get_browser_id else sid
 
     # Build user message — multimodal if images present
     if images and len(images) > 0:
@@ -135,11 +155,10 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                 image_previews.append(img["dataUrl"])
             elif img.get("b64") and img.get("mime"):
                 image_previews.append(f"data:{img['mime']};base64,{img['b64']}")
-    safe_emit("chat_start", {"user": user_input, "chat_id": chat_id, "images": image_previews})
+    _emit("chat_start", {"user": user_input, "chat_id": chat_id, "images": image_previews}, room=browser_id)
 
-    browser_sid = get_browser_id() if get_browser_id else sid
-    if user_sessions and browser_sid in user_sessions:
-        web_sessions.save_session(browser_sid, user_sessions[browser_sid])
+    if user_sessions and browser_id in user_sessions:
+        web_sessions.save_session(browser_id, user_sessions[browser_id])
 
     url = f"{bot.cfg['base_url']}/chat/completions"
     headers = {"Authorization": f"Bearer {bot.cfg['api_key']}", "Content-Type": "application/json"}
@@ -154,7 +173,7 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
         if _round > 0:
             bot._auto_compress()
             body["messages"] = bot.messages
-        safe_emit("thinking", {"active": True, "chat_id": chat_id})
+        _emit("thinking", {"active": True, "chat_id": chat_id}, room=browser_id)
         try:
             resp = session.post(url, headers=headers, json=body, stream=True, timeout=180)
             if resp.status_code == 413:
@@ -171,7 +190,7 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                     resp = session.post(url, headers=headers, json=body, stream=True, timeout=180)
             resp.raise_for_status()
         except Exception as e:
-            safe_emit("chat_error", {"error": str(e), "chat_id": chat_id})
+            _emit("chat_error", {"error": str(e), "chat_id": chat_id}, room=browser_id)
             bot.messages.pop()
             return
 
@@ -196,13 +215,13 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
             if content:
                 if not started:
                     started = True
-                    safe_emit("bot_stream_start", {"chat_id": chat_id})
+                    _emit("bot_stream_start", {"chat_id": chat_id}, room=browser_id)
                     if stream_buffers and key:
                         stream_buffers[key]["started"] = True
                 full_text += content
                 if stream_buffers and key:
                     stream_buffers[key]["text"] = full_text
-                safe_emit("bot_stream_chunk", {"text": content, "chat_id": chat_id})
+                _emit("bot_stream_chunk", {"text": content, "chat_id": chat_id}, room=browser_id)
 
             for tc in (delta.get("tool_calls") or []):
                 idx = tc.get("index", 0)
@@ -215,7 +234,7 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
             if finish in ("stop", "tool_calls"): break
 
         if started:
-            safe_emit("bot_stream_end", {"full_text": full_text, "chat_id": chat_id})
+            _emit("bot_stream_end", {"full_text": full_text, "chat_id": chat_id}, room=browser_id)
 
         assistant_msg = {"role": "assistant", "content": full_text or None}
 
@@ -234,16 +253,16 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                 fname = tc["function"]["name"]
                 try: fargs = json.loads(tc["function"]["arguments"])
                 except Exception: fargs = {}
-                safe_emit("tool_call", {"name": fname, "args": json.dumps(fargs, ensure_ascii=False)[:400], "chat_id": chat_id})
+                _emit("tool_call", {"name": fname, "args": json.dumps(fargs, ensure_ascii=False)[:400], "chat_id": chat_id}, room=browser_id)
                 result = exec_tool(fname, fargs, bot.work_dir, bot)
                 # Check if result is media JSON (from ai_media tools)
                 media_info = _parse_media_result(result)
                 if media_info:
-                    safe_emit("media_result", {"name": fname, "media": media_info, "chat_id": chat_id})
-                    safe_emit("tool_result", {"name": fname, "result": f"[{media_info['type'].upper()}: {media_info.get('filename', '')}]", "chat_id": chat_id})
+                    _emit("media_result", {"name": fname, "media": media_info, "chat_id": chat_id}, room=browser_id)
+                    _emit("tool_result", {"name": fname, "result": f"[{media_info['type'].upper()}: {media_info.get('filename', '')}]", "chat_id": chat_id}, room=browser_id)
                     bot.messages.append({"role": "tool", "tool_call_id": tc["id"], "content": result or "(no output)"})
                 elif isinstance(result, dict) and result.get("type") == "image":
-                    safe_emit("tool_result", {"name": fname, "result": f"[Image: {result.get('filename', '?')} ({result.get('size_kb', 0)} KB)]", "chat_id": chat_id})
+                    _emit("tool_result", {"name": fname, "result": f"[Image: {result.get('filename', '?')} ({result.get('size_kb', 0)} KB)]", "chat_id": chat_id}, room=browser_id)
                     bot.messages.append({
                         "role": "tool", "tool_call_id": tc["id"],
                         "content": [
@@ -252,7 +271,7 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
                         ]
                     })
                 else:
-                    safe_emit("tool_result", {"name": fname, "result": (result or "(no output)")[:3000], "chat_id": chat_id})
+                    _emit("tool_result", {"name": fname, "result": (result or "(no output)")[:3000], "chat_id": chat_id}, room=browser_id)
                     bot.messages.append({"role": "tool", "tool_call_id": tc["id"], "content": result or "(no output)"})
             body["messages"] = bot.messages
             continue
@@ -265,17 +284,17 @@ def _stream_chat_inner(sid, bot, user_input, chat_id="", images=None,
             except Exception:
                 out_toks = len(full_text) // 4
             bot._update_cost(0, out_toks)
-        safe_emit("chat_done", {"text": full_text, "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id})
-        safe_emit("status", make_status(bot))
+        _emit("chat_done", {"text": full_text, "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id}, room=browser_id)
+        _emit("status", make_status(bot), room=browser_id)
         if stream_buffers and key:
             stream_buffers.pop(key, None)
-        if user_sessions and browser_sid in user_sessions:
-            web_sessions.save_session(browser_sid, user_sessions[browser_sid])
+        if user_sessions and browser_id in user_sessions:
+            web_sessions.save_session(browser_id, user_sessions[browser_id])
         return
 
-    safe_emit("chat_done", {"text": full_text or "(max rounds)", "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id})
-    safe_emit("status", make_status(bot))
+    _emit("chat_done", {"text": full_text or "(max rounds)", "tokens": bot.tokens, "cost": round(bot.cost, 4), "chat_id": chat_id}, room=browser_id)
+    _emit("status", make_status(bot), room=browser_id)
     if stream_buffers and key:
         stream_buffers.pop(key, None)
-    if user_sessions and browser_sid in user_sessions:
-        web_sessions.save_session(browser_sid, user_sessions[browser_sid])
+    if user_sessions and browser_id in user_sessions:
+        web_sessions.save_session(browser_id, user_sessions[browser_id])

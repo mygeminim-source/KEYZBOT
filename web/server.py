@@ -61,7 +61,7 @@ _req.Session.__init__ = _patched_session_init
 ASYNC_MODE = "threading"
 
 from flask import Flask, send_from_directory, jsonify, request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room, join_room
 from core import config, agent, memory, plan, tasks, hooks, skills, scheduler, subagents, permissions
 from core import web_sessions, rate_limit
 from web.terminal import get_terminal, close_terminal
@@ -73,6 +73,10 @@ app = Flask(__name__, static_folder=os.path.join(_DIR, "static"), static_url_pat
 app.config["SECRET_KEY"] = os.environ.get("KEYZBOT_SECRET", os.urandom(24).hex())
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=ASYNC_MODE)
+
+# Wire up socketio to streaming module for room-based emits
+from web.streaming import set_socketio
+set_socketio(socketio)
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
 _AUTH_TOKEN = os.environ.get("KEYZBOT_TOKEN", "")  # Set to enable auth
@@ -377,7 +381,10 @@ def on_connect():
     if _AUTH_TOKEN and bid not in _authenticated_sids:
         emit("auth_required", {"message": "Token required"})
         return
+    # Join browser_id room so safe_emit can reach this client after reconnect
+    join_room(bid)
     _get_user(bid)
+    join_room(bid)
     _start_cron()
     user = _user_sessions[bid]
     # Build messages for active chat
@@ -408,6 +415,7 @@ def on_connect():
 def on_disconnect():
     close_terminal(request.sid)
     bid = _get_browser_id()
+    leave_room(bid)
     if bid in _user_sessions:
         web_sessions.save_session(bid, _user_sessions[bid])
         # Don't remove session if any chat is still streaming
@@ -537,6 +545,12 @@ def on_user_message(data):
 
         emit("status", make_status(bot))
         emit("chats_updated", {"chats": _make_chat_summary(user)})
+        return
+
+    # Guard: don't allow new message while this chat is already streaming
+    stream_key = (sid, user["active_chat"])
+    if stream_key in _streaming_chats:
+        emit("chat_error", {"error": "Please wait — the current response is still being generated.", "chat_id": user["active_chat"]})
         return
 
     stream_chat(sid, bot, text, user["active_chat"], images=images,
